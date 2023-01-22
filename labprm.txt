@@ -1,0 +1,1022 @@
+#lab program 1 WJ
+
+import queue
+import random
+import time
+
+dfsq = queue.Queue()
+class node:
+    def __init__(self, data):
+        self.x = 0
+        self.y = 0
+        self.parent = data
+    def printnode(self):
+        print("(", self.x, ",", self.y, ")")
+def generateAllSuccessors(cnode):
+    list1 = []
+    list_rule = []
+    while len(list_rule) < 8:
+        rule_no = random.randint(1, 8)
+        if (not rule_no in list_rule):
+            list_rule.append(rule_no)
+            nextnode = operation(cnode, rule_no)
+        if nextnode != None and not IsNodeInlist(nextnode, visitednodelist):
+            list1.append(nextnode)
+    """for rule in range (1,9):
+    nextnode = operation(cnode,rule) #current node
+    if nextnode != None :
+    list1.append(nextnode)"""
+    return list1
+
+def operation(cnode, rule):
+    x = cnode.x
+    y = cnode.y
+    if rule == 1:
+        if x < maxjug1:
+            x = maxjug1
+        else:
+            return None
+    elif rule == 2:
+        if y < maxjug2:
+            y = maxjug2
+        else:
+            return None
+    elif rule == 3:
+        if x > 0:
+            x = 0
+        else:
+            return None
+    elif rule == 4:
+        if y > 0:
+            y = 0
+        else:
+            return None
+    elif rule == 5:
+        if x + y >= maxjug1:
+            y = y - (maxjug1 - x)
+            x = maxjug1
+        else:
+            return None
+    elif rule == 6:
+        if x + y >= maxjug2:
+            x = x - (maxjug2 - y)
+            y = maxjug2
+        else:
+            return None
+    elif rule == 7:
+        if x + y < maxjug1:
+            x = x + y
+            y = 0
+        else:
+            return None
+    elif rule == 8:
+        if x + y < maxjug2:
+            x = 0
+            y = x + y
+        else:
+            return None
+    if (x == cnode.x and y == cnode.y):
+        return None
+    nextnode = node(cnode)
+    nextnode.x = x
+    nextnode.y = y
+    nextnode.parent = cnode
+    return nextnode
+
+def pushlist(list1):
+    for m in list1:
+        dfsq.put(m)
+
+def popnode():
+    if (dfsq.empty()):
+        return None
+    else:
+        return dfsq.get()
+def isGoalNode(cnode, gnode):
+    if (cnode.x == gnode.x and cnode.y == gnode.y):
+        return True
+    return False
+
+visitednodelist = []
+
+def dfsMain(initialNode, GoalNode):
+    dfsq.put(initialNode)
+    while not dfsq.empty():
+        visited_node = popnode()
+        print("Pop node:")
+        visited_node.printnode()
+        if isGoalNode(visited_node, GoalNode):
+            return visited_node
+        successor_nodes = generateAllSuccessors(visited_node)
+        pushlist(successor_nodes)
+    return None
+
+def IsNodeInlist(node, list1):
+    for m in list1:
+        if (node.x == m.x and node.y == m.y):
+            return True
+        return False
+
+def printpath(cnode):
+    temp = cnode
+    list2 = []
+    while (temp != None):
+        list2.append(temp)
+        temp = temp.parent
+    list2.reverse()
+    for i in list2:
+        i.printnode()
+    print("Path Cost:", len(list2))
+
+if __name__ == '__main__':
+    list2 = []
+    maxjug1 = int(input("Enter value of maxjug1:"))
+    maxjug2 = int(input("Enter value of maxjug2:"))
+    initialNode = node(None)
+    initialNode.x = 0
+    initialNode.y = 0
+    initialNode.parent = None
+    GoalNode = node(None)
+    GoalNode.x = int(input("Enter value of Goal in jug1:"))
+    GoalNode.y = 0
+    GoalNode.parent = None
+    start_time = time.time()
+    solutionNode = dfsMain(initialNode, GoalNode)
+    end_time = time.time()
+    if (solutionNode != None):
+        print("Solution can Found:")
+    else:
+        print("Solution can't be found.")
+    printpath(solutionNode)
+    diff = end_time - start_time
+    print("Execution Time:", diff * 1000, "ms")
+----------------------------------------------------------------------------------------------
+
+#lab program 2 CM
+
+
+import copy
+class CoastState:
+    def __init__(self, c, m):
+        self.cannibals = c
+        self.missionaries = m
+    def valid_coast(self):
+        if self.missionaries >= self.cannibals or self.missionaries == 0:
+            return True
+        else:
+            return False
+    def goal_coast(self):
+        if self.cannibals == 3 and self.missionaries == 3:
+            return True
+        else:
+            return False
+
+class GameState:
+    def __init__(self, data):
+        self.data = data
+        self.parent = None
+    def building_tree(self):
+        children = []
+        coast = ""
+        across_coast = ""
+        temp = copy.deepcopy(self.data)
+        if self.data["boat"] == "left":
+            coast = "left"
+            across_coast = "right"
+        elif self.data["boat"] == "right":
+            coast = "right"
+            across_coast = "left"
+        if temp[coast].cannibals >= 2:
+            temp[coast].cannibals = temp[coast].cannibals - 2
+            temp[across_coast].cannibals = temp[across_coast].cannibals + 2
+            temp["boat"] = across_coast
+            if temp[coast].valid_coast() and temp[across_coast].valid_coast():
+                child = GameState(temp)
+                child.parent = self
+                children.append(child)
+            temp = copy.deepcopy(self.data)
+
+        if temp[coast].missionaries >= 2:
+            temp[coast].missionaries = temp[coast].missionaries - 2
+            temp[across_coast].missionaries = temp[across_coast].missionaries + 2
+            temp["boat"] = across_coast
+            if temp[coast].valid_coast() and temp[across_coast].valid_coast():
+                child = GameState(temp)
+                child.parent = self
+                children.append(child)
+        temp = copy.deepcopy(self.data)
+
+        if temp[coast].cannibals >= 1:
+            temp[coast].cannibals = temp[coast].cannibals - 1
+            temp[across_coast].cannibals = temp[across_coast].cannibals + 1
+            temp["boat"] = across_coast
+            if temp[coast].valid_coast() and temp[across_coast].valid_coast():
+                child = GameState(temp)
+                child.parent = self
+                children.append(child)
+        temp = copy.deepcopy(self.data)
+
+        if temp[coast].missionaries >= 1:
+            temp[coast].missionaries = temp[coast].missionaries - 1
+            temp[across_coast].missionaries = temp[across_coast].missionaries + 1
+            temp["boat"] = across_coast
+            if temp[coast].valid_coast() and temp[across_coast].valid_coast():
+                child = GameState(temp)
+                child.parent = self
+                children.append(child)
+        temp = copy.deepcopy(self.data)
+
+        if temp[coast].missionaries >= 1 and temp[coast].cannibals >= 1:
+            temp[coast].missionaries = temp[coast].missionaries - 1
+            temp[across_coast].missionaries = temp[across_coast].missionaries + 1
+            temp[coast].cannibals = temp[coast].cannibals - 1
+            temp[across_coast].cannibals = temp[across_coast].cannibals + 1
+            temp["boat"] = across_coast
+            if temp[coast].valid_coast() and temp[across_coast].valid_coast():
+                child = GameState(temp)
+                child.parent = self
+                children.append(child)
+        return children
+def breadth_first_search():
+        left = CoastState(3, 3)
+        right = CoastState(0, 0)
+        root_data = {"left": left, "right": right, "boat": "left"}
+        explored = []
+        nodes = []
+        path = []
+        nodes.append(GameState(root_data))
+        while len(nodes) > 0:
+            g = nodes.pop(0)
+            explored.append(g)
+            if g.data["right"].goal_coast():
+                path.append(g)
+                return g
+            else:
+                next_children = g.building_tree()
+                for x in next_children:
+                    if (x not in nodes) or (x not in explored):
+                        nodes.append(x)
+        return None
+
+def print_path(g):
+        path = [g]
+        while g.parent:
+            g = g.parent
+            path.append(g)
+        print("  " + "Left Side" + "  " + "Right Side" + 
+              "  " + "Boat")
+        print(" Cannibals" + " Missionaries" + " " 
+              + "Cannibals" + " Missionaries" + "Boat Position")
+        counter = 0
+        for p in reversed(path):
+            print("State " + str(counter) + " Left C: " + str(p.data["left"].cannibals) + ". Left M: "
+            + str(
+                p.data["left"].missionaries) + ". | Right C: " + str(
+                p.data["right"].cannibals) + ". Right M: " + str(p.data["right"].missionaries) + 
+              ". |Boat: " + str(
+                p.data["boat"]))
+            counter = counter + 1
+            print("End of Path!")
+
+def main():
+    solution = breadth_first_search()
+    print("Missionaries and Cannibals AI Problem Solution using Breath - First Search:")
+    print_path(solution)
+
+if __name__ == "__main__":
+  main()
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+#lab program 3 AO* algorithm
+
+class Graph:
+    def __init__(self, graph, heuristicNodeList, startNode): 
+        self.graph = graph
+        self.H=heuristicNodeList
+        self.start=startNode
+        self.parent={}
+        self.status={}
+        self.solutionGraph={}
+    def applyAOStar(self):
+        self.aoStar(self.start, False)
+    def getNeighbors(self, v): 
+        return self.graph.get(v,'')
+    def getStatus(self,v): 
+        return self.status.get(v,0)
+    def setStatus(self,v, val): 
+        self.status[v]=val
+    def getHeuristicNodeValue(self, n):
+        return self.H.get(n,0) 
+    def setHeuristicNodeValue(self, n, value):
+        self.H[n]=value 
+    def printSolution(self):
+        print("FOR GRAPH SOLUTION, TRAVERSE THE GRAPH FROM THE START NODE:",self.start)
+        print("------------------------------------------------------------")
+        print(self.solutionGraph)
+        print("------------------------------------------------------------")
+    def computeMinimumCostChildNodes(self, v): 
+        
+        minimumCost=0
+        costToChildNodeListDict={}
+        costToChildNodeListDict[minimumCost]=[]
+        flag=True
+        for nodeInfoTupleList in self.getNeighbors(v): 
+            cost=0
+            nodeList=[]
+            for c, weight in nodeInfoTupleList:
+                cost=cost+self.getHeuristicNodeValue(c)+weight
+                nodeList.append(c)
+            if flag==True: 
+                minimumCost=cost
+                costToChildNodeListDict[minimumCost]=nodeList
+                flag=False
+            else:
+                if minimumCost>cost:
+                    minimumCost=cost
+                    costToChildNodeListDict[minimumCost]=nodeList 
+
+        return minimumCost, costToChildNodeListDict[minimumCost] 
+
+    def aoStar(self, v, backTracking):
+        print("HEURISTIC VALUES :", self.H)
+        print("SOLUTION GRAPH :", self.solutionGraph)
+        print("PROCESSING NODE :", v)
+        print("-----------------------------------------------------------------------------------------")
+        if self.getStatus(v) >= 0:
+            minimumCost, childNodeList = self.computeMinimumCostChildNodes(v)
+            print(minimumCost, childNodeList)
+            self.setHeuristicNodeValue(v, minimumCost)
+            self.setStatus(v,len(childNodeList))
+            solved=True 
+            for childNode in childNodeList:
+                self.parent[childNode]=v
+                if self.getStatus(childNode)!=-1:
+                    solved=solved & False
+            if solved==True: 
+                self.setStatus(v,-1)
+                self.solutionGraph[v]=childNodeList 
+
+            if v!=self.start: 
+                self.aoStar(self.parent[v], True)
+                
+            if backTracking==False: 
+                for childNode in childNodeList: 
+                    self.setStatus(childNode,0) 
+                    self.aoStar(childNode, False) 
+
+
+print ("Graph - 1")
+h1 = {'A': 1, 'B': 6, 'C': 2, 'D': 12, 'E': 2, 'F': 1, 'G': 5, 'H': 7, 'I': 7, 'J': 1}
+graph1 = {
+    'A': [[('B', 1), ('C', 1)], [('D', 1)]],
+    'B': [[('G', 1)], [('H', 1)]],
+    'C': [[('J', 1)]],
+    'D': [[('E', 1), ('F', 1)]],
+    'G': [[('I', 1)]]
+}
+G1= Graph(graph1, h1, 'A')
+G1.applyAOStar()
+G1.printSolution()
+print ("Graph - 2")
+h2 = {'A': 1, 'B': 6, 'C': 12, 'D': 10, 'E': 4, 'F': 4, 'G': 5, 'H': 7} 
+graph2 = { 
+    'A': [[('B', 1), ('C', 1)], [('D', 1)]],
+
+    'B': [[('G', 1)], [('H', 1)]], 
+    'D': [[('E', 1), ('F', 1)]] 
+}
+G2 = Graph(graph2, h2, 'A') 
+
+G2.applyAOStar() 
+G2.printSolution() 
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+#lab program 4 Nqueens
+
+
+print ("Enter the number of queens")
+N = int(input())
+board = [[0]*N for _ in range(N)]
+def is_attack(i, j):
+    
+    for k in range(0,N):
+        if board[i][k]==1 or board[k][j]==1:
+            return True
+    for k in range(0,N):
+        for l in range(0,N):
+            if (k+l==i+j) or (k-l==i-j):
+                if board[k][l]==1:
+                    return True
+    return False
+def N_queen(n):
+    if n==0:
+        return True
+    for i in range(0,N):
+        for j in range(0,N):
+            if (not(is_attack(i,j))) and (board[i][j]!=1):
+                board[i][j] = 1
+                if N_queen(n-1)==True:
+                    return True
+                board[i][j] = 0
+    return False
+N_queen(N)
+for i in board:
+ print (i)
+
+
+-----------------------------------------------------------------------------------------------------------------------
+
+#lab program 5 TSP
+
+
+import math
+maxsize = float('inf')
+def copyToFinal(curr_path):
+    final_path[:N + 1] = curr_path[:]
+    final_path[N] = curr_path[0] 
+def firstMin(adj, i):
+    min = maxsize
+    for k in range(N):
+        if adj[i][k] < min and i != k:
+            min = adj[i][k]
+    return min
+def secondMin(adj, i):
+    first, second = maxsize, maxsize
+    for j in range(N):
+        if i == j:
+            continue
+        if adj[i][j] <= first:
+            second = first
+            first = adj[i][j]
+        elif(adj[i][j] <= second and adj[i][j] != first):
+            second = adj[i][j]
+    return second
+
+def TSPRec(adj, curr_bound, curr_weight,level, curr_path, visited):
+    global final_res
+    if level == N:
+        if adj[curr_path[level - 1]][curr_path[0]] != 0:
+            curr_res = curr_weight + adj[curr_path[level - 1]][curr_path[0]]
+        if curr_res < final_res:
+            copyToFinal(curr_path)
+            final_res = curr_res
+        return
+    for i in range(N):
+        if (adj[curr_path[level-1]][i] != 0 and visited[i] == False):
+            temp = curr_bound
+            curr_weight += adj[curr_path[level - 1]][i]
+            if level == 1:
+                curr_bound -= ((firstMin(adj, curr_path[level - 1]) + firstMin(adj, i)) / 2)
+            else:
+                curr_bound -= ((secondMin(adj, curr_path[level - 1]) + firstMin(adj, i)) / 2)
+            if curr_bound + curr_weight < final_res:
+                curr_path[level] = i
+                visited[i] = True
+                TSPRec(adj, curr_bound, curr_weight,level + 1, curr_path, visited)
+            curr_weight -= adj[curr_path[level - 1]][i]
+            curr_bound = temp
+            visited = [False] * len(visited)
+            for j in range(level):
+                if curr_path[j] != -1:
+                    visited[curr_path[j]] = True
+
+def TSP(adj):
+    curr_bound = 0
+    curr_path = [-1] * (N + 1)
+    visited = [False] * N
+    for i in range(N):
+        curr_bound += (firstMin(adj, i) + secondMin(adj, i))
+    curr_bound = math.ceil(curr_bound / 2)
+    visited[0] = True
+    curr_path[0] = 0
+    TSPRec(adj, curr_bound, 0, 1, curr_path, visited)
+
+adj = [[0, 4, 12, 7],[5, 0, 0, 18],[11, 0, 0, 6],[10, 2, 3, 0]]
+N = 4
+final_path = [None] * (N + 1)
+visited = [False] * N
+final_res = maxsize
+TSP(adj)
+print("Minimum cost :", final_res)
+print("Path Taken : ", end = ' ')
+for i in range(N + 1):
+    print(final_path[i], end = ' ')
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+#lab program 6 FC BC
+
+
+from collections import deque
+import copy
+file=open('a.txt')
+line=file.readlines()
+line=list(map(lambda s: s.strip(),line)) 
+R = [ ]
+for i in range(len(line)):
+    k=i+1
+    if line[i]=='1) Rules':
+        while line[k] != '2) Facts':
+            r = deque(line[k].split())
+            rhs = r.popleft()
+            r.append(rhs)
+            R.append(list(r))
+            k = k + 1
+    elif line[i]=='2) Facts':
+        Fact=line[k].split()
+    elif line[i]=='3) Goal':
+        Goal=line[k]
+
+print('PART1. Data')
+print(' 1)Rules')
+for i in range(len(R)):
+    print(' R', i+1, ': ', end='')
+    for j in range(len(R[i])-1):
+        print(R[i][j], end= ' ')
+    print('->', R[i][-1])
+print()
+print(' 2)Facts')
+print(' ', end='')
+for i in Fact:
+    print(i,' ',end='')
+print();print()
+print(' 3)Goal')
+print(' ', Goal)
+
+Path=[]
+Flag=[]
+origin_fact = copy.deepcopy(Fact)
+print('PART2. Trace')
+count=0
+Yes = False
+while Goal not in Fact and Yes==False: 
+    count+= 1
+    print(' ', end='')
+    print('ITERATION',count)
+    K=-1
+    apply = False
+    while K<len(R)-1 and not apply: 
+        K=K+1
+        print(' R', K + 1, ': ', end='')
+        for i, v in enumerate(R[K]): 
+            if i < len(R[K]) -1:
+                print(v, '', end='')
+            else:
+                print('->',v, end='')
+        if str(K+1) in Flag: 
+            b = Flag.index(str(K+1)) +1
+            if Flag[b]==[1]:
+                print(', skip, because flag1 raised')
+            elif Flag[b]==[2]:
+                print(', skip, because flag2 raised')
+        else: 
+            for i, v in enumerate(R[K]): 
+                if i == len(R[K]) -1:
+                    continue
+                if v in Fact:
+                    if R[K][-1] in Fact: 
+                        print(' not applied, because RHS in facts. Raise flag2')
+                        Flag.append(str(K + 1)); Flag.append([2])
+                        break
+                    elif v == R[K][-2]:
+                        apply = True
+                        P=K+1
+                        break
+                else:
+                    print(', not applied, because of lacking ', v)
+                    break
+            if apply:
+                Fact.append(R[P-1][-1])
+                Flag.append(str(P)); Flag.append([1])
+                Path.append(P)
+                print(', apply, Raise flag1. Facts ', end='')
+                for i in Fact:
+                    print(i,' ', end='')
+                print()
+            elif K== len(R)-1:
+                Yes=True
+    print()
+    print('PART3. Results')
+    if Goal in origin_fact:
+        print(' ', end='')
+        print('Goal A in facts. Empty path.')
+    else:
+        if Goal in Fact:
+            print(' ',end='')
+            print('1) Goal',Goal,'achieved')
+            print(' ', end='')
+            print('2) Path:', end='')
+            for i in Path:
+                print('R', i, ' ', end='')
+        else:
+            print('1) Goal',Goal,' not achieved')
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+#lab program 8 TTT
+
+
+theBoard = {'7': ' ' , '8': ' ' , '9': ' ' ,
+            '4': ' ' , '5': ' ' , '6': ' ' ,
+            '1': ' ' , '2': ' ' , '3': ' ' }
+board_keys = []
+for key in theBoard:
+    board_keys.append(key)
+def printBoard(board):
+    print(board['7'] + '|' + board['8'] + '|' + board['9'])
+    print('-+-+-')
+    print(board['4'] + '|' + board['5'] + '|' + board['6'])
+    print('-+-+-')
+    print(board['1'] + '|' + board['2'] + '|' + board['3'])
+
+def game():
+    turn = 'X'
+    count = 0
+    for i in range(10):
+        printBoard(theBoard)
+        print("It's your turn," + turn + ".Move to which place?")
+        move = input() 
+        if theBoard[move] == ' ':
+            theBoard[move] = turn
+            count += 1
+        else:
+            print("That place is already filled.\nMove to which place?")
+            continue
+ 
+        if count >= 5:
+            if theBoard['7'] == theBoard['8'] == theBoard['9'] != ' ': # across the top
+                printBoard(theBoard)
+                print("\nGame Over.\n") 
+                print(" **** " +turn + " won. ****") 
+                break
+            elif theBoard['4'] == theBoard['5'] == theBoard['6'] != ' ': # across the middle
+                printBoard(theBoard)
+                print("\nGame Over.\n") 
+                print(" **** " +turn + " won. ****")
+                break
+            elif theBoard['1'] == theBoard['2'] == theBoard['3'] != ' ': # across the bottom
+                printBoard(theBoard)
+                print("\nGame Over.\n") 
+                print(" **** " +turn + " won. ****")
+                break
+            elif theBoard['1'] == theBoard['4'] == theBoard['7'] != ' ': # down the left side
+                printBoard(theBoard)
+                print("\nGame Over.\n") 
+                print(" **** " +turn + " won. ****")
+                break
+            elif theBoard['2'] == theBoard['5'] == theBoard['8'] != ' ': # down the middle
+                printBoard(theBoard)
+                print("\nGame Over.\n") 
+                print(" **** " +turn + " won. ****")
+                break
+            elif theBoard['3'] == theBoard['6'] == theBoard['9'] != ' ': # down the right side
+                printBoard(theBoard)
+                print("\nGame Over.\n") 
+                print(" **** " +turn + " won. ****")
+                break 
+            elif theBoard['7'] == theBoard['5'] == theBoard['3'] != ' ': # diagonal
+                printBoard(theBoard)
+                print("\nGame Over.\n") 
+                print(" **** " +turn + " won. ****")
+                break
+            elif theBoard['1'] == theBoard['5'] == theBoard['9'] != ' ': # diagonal
+                printBoard(theBoard)
+                print("\nGame Over.\n") 
+                print(" **** " +turn + " won. ****")
+                break 
+        if count == 9:
+            print("\nGame Over.\n") 
+            print("It's a Tie!!")
+        if turn =='X':
+            turn = 'O'
+        else:
+            turn = 'X' 
+    restart = input("Do want to play Again?(y/n)")
+    if restart == "y" or restart == "Y": 
+        for key in board_keys:
+            theBoard[key] = " "
+        game()
+if __name__ == "__main__":
+    game()
+
+
+----------------------------------------------------------------------------------------------------------------------------------------
+#lab program 7 FOPL
+import time
+start_time=time.time()
+import re
+import itertools
+import collections
+import copy
+import queue
+
+p=open("input4.txt","r")
+data=list()
+data1=p.readlines()
+count=0
+
+n=int(data1[0])
+queries=list()
+for i in range(1,n+1):
+    queries.append(data1[i].rstrip())
+k=int(data1[n+1])
+kbbefore=list()
+
+def CNF(sentence):
+    temp=re.split("=>",sentence)
+    temp1=temp[0].split('&')
+    for i in range(0,len(temp1)):
+        if temp1[i][0]=='~':
+            temp1[i]=temp1[i][1:]
+        else:
+            temp1[i]='~'+temp1[i]
+    temp2='|'.join(temp1)
+    temp2=temp2='|'+temp[1]
+    return temp2
+
+variableArray=list("abcdefghijklmnopqrstuvwxyz")
+variableArray2=[]
+variableArray3=[]
+variableArray5=[]
+variableArray6=[]
+for eachCombination in itertools.permutations(variableArray, 2):
+    variableArray2.append(eachCombination[0] + eachCombination[1])
+for eachCombination in itertools.permutations(variableArray, 3):
+    variableArray3.append(eachCombination[0] + eachCombination[1] + eachCombination[2])
+for eachCombination in itertools.permutations(variableArray, 4):
+    variableArray5.append(eachCombination[0] + eachCombination[1] + eachCombination[2]+ eachCombination[3])
+for eachCombination in itertools.permutations(variableArray, 5):
+    variableArray6.append(eachCombination[0] + eachCombination[1] + eachCombination[2] + eachCombination[3] + eachCombination[4])
+variableArray = variableArray + variableArray2 + variableArray3 + variableArray5 + variableArray6
+capitalVariables = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+number=0
+
+def standardizationnew(sentence):
+    newsentence=list(sentence)
+    i=0
+    global number
+    variables=collections.OrderedDict()
+    positionsofvariable=collections.OrderedDict()
+    lengthofsentence=len(sentence)
+    for i in range(0,lengthofsentence-1):
+        if(newsentence[i]==',' or newsentence[i]=='('):
+            if newsentence[i+1] not in capitalVariables:
+                substitution=variables.get(newsentence[i+1])
+                positionsofvariable[i+1]=i+1
+                if not substitution :
+                    variables[newsentence[i+1]]=variableArray[number]
+                    newsentence[i+1]=variableArray[number]
+                    number+=1
+                else:
+                    newsentence[i+1]=substitution
+    return "".join(newsentence)
+
+def insidestandardizationnew(sentence):
+    lengthofsentence=len(sentence)
+    newsentence=sentence
+    variables=collections.OrderedDict()
+    positionsofvariable=collections.OrderedDict()
+    global number
+    i=0
+    while i <=len(newsentence)-1 :
+        if(newsentence[i]==',' or newsentence[i]=='('):
+            if newsentence[i+1] not in capitalVariables:
+                j=i+1
+                while(newsentence[j]!=',' and newsentence[j]!=')' ):
+                    j+=1
+                substitution=variables.get(newsentence[i+1:j])
+                if not substitution :
+                    variables[newsentence[i+1:j]]=variableArray[number]
+                    newsentence=newsentence[:i+1]+variableArray[number]+newsentence[j:]
+                    i=i+len(variableArray[number])
+                    number+=1
+                else:
+                    newsentence=newsentence[:i+1]+substitution+newsentence[j:]
+                    i=i+len(substitution)
+        i+=1
+    return newsentence
+
+def replace(sentence,theta):
+    lengthofsentence=len(sentence)
+    newsentence=sentence
+    i=0
+    while i <=len(newsentence)-1 :
+        if(newsentence[i]==',' or newsentence[i]=='('):
+            if newsentence[i+1] not in capitalVariables:
+                j=i+1
+                while(newsentence[j]!=',' and newsentence[j]!=')' ):
+                    j+=1
+                nstemp=newsentence[i+1:j]
+                substitution=theta.get(nstemp)
+                if substitution :
+                    newsentence=newsentence[:i+1]+substitution+newsentence[j:]
+                    i=i+len(substitution)
+        i+=1
+    return newsentence
+
+repeatedsentencecheck=collections.OrderedDict()
+
+def insidekbcheck(sentence):
+    lengthofsentence=len(sentence)
+    newsentence=pattern.split(sentence)
+    newsentence.sort()
+    newsentence="|".join(newsentence)
+    global repeatedsentencecheck
+    i=0
+    while i <=len(newsentence)-1 :
+        if(newsentence[i]==',' or newsentence[i]=='('):
+            if newsentence[i+1] not in capitalVariables:
+                j=i+1
+                while(newsentence[j]!=',' and newsentence[j]!=')' ):
+                    j+=1
+                newsentence=newsentence[:i+1]+'x'+newsentence[j:]
+        i+=1
+    repeatflag=repeatedsentencecheck.get(newsentence)
+    if repeatflag :
+        return True
+    repeatedsentencecheck[newsentence]=1
+    return False
+
+for i in range(n+2,n+2+k):
+    data1[i]=data1[i].replace(" ","")
+    if "=>" in data1[i]:
+        data1[i]=data1[i].replace(" ","")
+        sentencetemp=CNF(data1[i].rstrip())
+        kbbefore.append(sentencetemp)
+    else:
+        kbbefore.append(data1[i].rstrip())
+for i in range(0,k):
+    kbbefore[i]=kbbefore[i].replace(" ","")
+    
+kb={}
+pattern=re.compile("\||&|=>") 
+pattern1=re.compile("[(,]")
+for i in range(0,k):
+    kbbefore[i]=standardizationnew(kbbefore[i])
+    temp=pattern.split(kbbefore[i])
+    lenoftemp=len(temp)
+    for j in range(0,lenoftemp):
+        clause=temp[j]
+        clause=clause[:-1]
+        predicate=pattern1.split(clause)
+        argumentlist=predicate[1:]
+        lengthofpredicate=len(predicate)-1
+        if predicate[0] in kb:
+            if lengthofpredicate in kb[predicate[0]]:
+                kb[predicate[0]][lengthofpredicate].append([kbbefore[i],temp,j,predicate[1:]])
+            else:
+                kb[predicate[0]][lengthofpredicate]=[kbbefore[i],temp,j,predicate[1:]]
+        else:
+            kb[predicate[0]]={lengthofpredicate:[[kbbefore[i],temp,j,predicate[1:]]]}
+            
+for qi in range(0,n):
+    queries[qi]=standardizationnew(queries[qi])
+    
+def substituevalue(paramArray, x, y):
+    for index, eachVal in enumerate(paramArray):
+        if eachVal == x:
+            paramArray[index] = y
+    return paramArray
+
+def unificiation(arglist1,arglist2):
+    theta = collections.OrderedDict()
+    for i in range(len(arglist1)):
+        if arglist1[i] != arglist2[i] and (arglist1[i][0] in capitalVariables) and (arglist2[i][0] in capitalVariables):
+            return []
+        elif arglist1[i] == arglist2[i] and (arglist1[i][0] in capitalVariables) and (arglist2[i][0] in capitalVariables):
+            if arglist1[i] not in theta.keys():
+                theta[arglist1[i]] = arglist2[i]
+        elif (arglist1[i][0] in capitalVariables) and not (arglist2[i][0] in capitalVariables):
+            if arglist2[i] not in theta.keys():
+                theta[arglist2[i]] = arglist1[i]
+                arglist2 = substituevalue(arglist2, arglist2[i], arglist1[i])
+        elif not (arglist1[i][0] in capitalVariables) and (arglist2[i][0] in capitalVariables):
+            if arglist1[i] not in theta.keys():
+                theta[arglist1[i]] = arglist2[i]
+                arglist1 = substituevalue(arglist1, arglist1[i], arglist2[i])
+        elif not (arglist1[i][0] in capitalVariables) and not (arglist2[i][0] in capitalVariables):
+            if arglist1[i] not in theta.keys():
+                theta[arglist1[i]] = arglist2[i]
+                arglist1 = substituevalue(arglist1, arglist1[i], arglist2[i])
+            else:
+                argval=theta[arglist1[i]]
+                theta[arglist2[i]]=argval
+                arglist2 = substituevalue(arglist2, arglist2[i], argval)
+    return [arglist1,arglist2,theta]
+
+def resolution():
+    global repeatedsentencecheck
+    answer=list()
+    qrno=0
+    for qr in queries:
+        qrno+=1
+        repeatedsentencecheck.clear()
+        q=queue.Queue()
+        query_start=time.time()
+        kbquery=copy.deepcopy(kb)
+        ans=qr
+        if qr[0]=='~':
+            ans=qr[1:]
+        else:
+            ans='~'+qr
+        q.put(ans)
+        label:outerloop
+        currentanswer="FALSE"
+        counter=0
+        while True:
+            counter+=1
+            if q.empty():
+                break
+            ans=q.get()
+            label:outerloop1
+            ansclauses=pattern.split(ans)
+            lenansclauses=len(ansclauses)
+            flagmatchedwithkb=0
+            innermostflag=0
+            for ac in range(0,lenansclauses):
+                insidekbflag=0
+                ansclausestruncated=ansclauses[ac][:-1]
+                ansclausespredicate=pattern1.split(ansclausestruncated)
+                lenansclausespredicate=len(ansclausespredicate)-1
+                if ansclausespredicate[0][0]=='~':
+                    anspredicatenegated=ansclausespredicate[0][1:]
+                else:
+                    anspredicatenegated="~"+ansclausespredicate[0]
+                x=kbquery.get(anspredicatenegated,{}).get(lenansclausespredicate)
+                if not x:
+                    continue
+                else:
+                    lenofx=len(x)
+                    for numofpred in range(0,lenofx):
+                        insidekbflag=0
+                        putinsideq=0
+                        sentenceselected=x[numofpred]
+                        
+                        thetalist=unificiation(copy.deepcopy(sentenceselected[3]),copy.deepcopy(ansclausespredicate[1:]))
+
+                        if(len(thetalist)!=0):
+                            for key in thetalist[2]:
+                                tl=thetalist[2][key]
+                                tl2=thetalist[2].get(tl)
+                                if tl2:
+                                    thetalist[2][key]=tl2
+                            flagmatchedwithkb=1
+                            notincludedindex=sentenceselected[2]
+                            senclause=copy.deepcopy(sentenceselected[1])
+                            mergepart1=""
+                            del senclause[notincludedindex]
+                            ansclauseleft=copy.deepcopy(ansclauses)
+                            del ansclauseleft[ac]
+                            for am in range(0,len(senclause)):
+                                senclause[am]=replace(senclause[am],thetalist[2])
+                                mergepart1=mergepart1+senclause[am]+'|'
+                            for remain in range(0,len(ansclauseleft)):
+                                listansclauseleft=ansclauseleft[remain]
+                                ansclauseleft[remain]=replace(listansclauseleft,thetalist[2])
+                                if ansclauseleft[remain] not in senclause:
+                                    mergepart1=mergepart1+ansclauseleft[remain]+'|'
+                            mergepart1=mergepart1[:-1]
+                            if mergepart1=="":
+                                currentanswer="TRUE"
+                                break
+                            ckbflag=insidekbcheck(mergepart1)
+                            if not ckbflag:
+                                mergepart1=insidestandardizationnew(mergepart1)
+                                ans=mergepart1
+                                temp=pattern.split(ans)
+                                lenoftemp=len(temp)
+                                for j in range(0,lenoftemp):
+                                    clause=temp[j]
+                                    clause=clause[:-1]
+                                    predicate=pattern1.split(clause)
+                                    argumentlist=predicate[1:]
+                                    lengthofpredicate=len(predicate)-1
+                                    if predicate[0] in kbquery:
+                                        if lengthofpredicate in kbquery[predicate[0]]:
+                                            kbquery[predicate[0]][lengthofpredicate].append([mergepart1,temp,j,argumentlist])
+                                        else:
+                                            kbquery[predicate[0]][lengthofpredicate]=[[mergepart1,temp,j,argumentlist]]
+                                    else:
+                                        kbquery[predicate[0]]={lengthofpredicate:[[mergepart1,temp,j,argumentlist]]}
+                                q.put(ans)
+                    if(currentanswer=="TRUE"):
+                        break
+                if(currentanswer=="TRUE"):
+                    break
+                if(counter==2000 or (time.time()-query_start)>20):
+                    break
+            answer.append(currentanswer)
+        return answer
+    
+if __name__ == '__main__':
+    finalanswer=resolution()
+    o=open("output.txt","w+")
+    wc=0
+    while(wc < n-1):
+        o.write(finalanswer[wc]+"\n")
+        wc+=1
+    o.write(finalanswer[wc])
+    o.close()
+
+-------------------------------------------------------------------------------------------------
